@@ -2,6 +2,7 @@
   📖Nover Scraper📖
 </h1>
 
+<img src = ".\images\cidthefish's novel scraper.jpg">
 
 <p align="center">
   <a href="rebrand.ly/novelscraper" target="_blank">
