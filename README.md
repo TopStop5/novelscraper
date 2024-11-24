@@ -17,19 +17,24 @@
  Terminator was made for educational purposes, therefor all consequences caused by your actions are **your** responsibility and accountability.
 ## <a id="content"></a>🌐 〢 Content
 - [🌟・Information](#info)
-* [📦・Installation](#Installation)
-- [📜・License](#setup)
-* [🏅・Credits](#creds)
+* [✅・Valid links](#valid)
+- [📦・Installation](#Installation)
+* [📜・License](#setup)
+- [🏅・Credits](#creds)
 
 
 ## <a id="info"></a>🌟〢Information
 This is a free and open source scraper for the site lightnovelcave. Other sites are currently not supported but I'm working to include them.
+
+## <a id="valid"></a>✅〢 Valid links
+Valid links look like this https://www.lightnovelcave.com/novel/the-beginning-after-the-end-web-novel-11110049 or https://www.lightnovelcave.com/novel/the-beginning-after-the-end-web-novel-11110049/chapters/ 
 
 
 
 ## <a id="Installation"></a>📦〢 Installation
 ### **MacOS**
 
+#### Downloading the code
 Download either the ZIP or with github desktop.
 <img src = ".\images\setupp1.png">
 
@@ -45,6 +50,12 @@ Open command prompt in the folder and run
 ```bash
 $ python main.py
 ```
+
+#### Downloading ChromeDriver
+ChromeDriver is required to run this, therefore install it from [here](https://googlechromelabs.github.io/chrome-for-testing/#dev)
+Download the Dev version for MacOS and unzip the folder. Copy the Path and when you run the program it'll ask you for the path. To reset the path type RESET.
+
+<img src = ".\images\chromedriver.png">
 
 ### **Windows**
 
@@ -75,6 +86,11 @@ Run the main program
 ```bash
 $ python main.py
 ```
+
+#### Downloading ChromeDriver
+ChromeDriver is required to run this, therefore install it from [here](https://googlechromelabs.github.io/chrome-for-testing/#dev)
+Download the Dev version for Windows and unzip the folder. Copy the Path and when you run the program it'll ask you for the path. When copying the path its essential that you right click the EXE file and copy as path. To reset the path type RESET.
+<img src = ".\images\chromedriver.png">
 
 ### **Linux**
 idk bruh your on your own
