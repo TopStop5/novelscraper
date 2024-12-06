@@ -1,4 +1,4 @@
-import os, time, sys, textwrap, json, requests
+import os, time, sys, textwrap, json, requests, random
 from colorama import Back, Fore, Style
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -71,83 +71,6 @@ def dismiss_popup(driver):
         pass
         print(f"{y}[{w}!{y}] {w}No Pop-up's detected or couldn't click: {e}")
 
-def check_for_updates(current_version):
-    # Define the URL for GitHub releases API
-    RELEASES_API_URL = "https://api.github.com/repos/TopStop5/novelscraper/releases/latest"
-    SCRIPT_URL = "https://raw.githubusercontent.com/TopStop5/novelscraper/main/novelscraper.py"
-
-    # Read the current version from the local version file (if exists)
-    try:
-        with open("version.txt", "r") as f:
-            stored_version = f.read().strip()
-    except FileNotFoundError:
-        stored_version = None  # No version file found
-
-    # If there's no version file, create one with the current version
-    if stored_version != current_version:
-        with open("version.txt", "w") as f:
-            f.write(current_version)
-
-    # Get the latest release info from GitHub
-    response = requests.get(RELEASES_API_URL)
-    if response.status_code != 200:
-        print(f"{Fore.LIGHTRED_EX}[Error] {Fore.WHITE}Error fetching release data.")
-        return
-
-    release_data = response.json()
-    latest_version = release_data['tag_name']  # Version info is in the 'tag_name' field
-
-    if latest_version != current_version:
-        # If there is a new version, update the version file
-        titleUpdater = """
-██╗   ██╗██████╗ ██████╗  █████╗ ████████╗███████╗██████╗ 
-██║   ██║██╔══██╗██╔══██╗██╔══██╗╚══██╔══╝██╔════╝██╔══██╗
-██║   ██║██████╔╝██║  ██║███████║   ██║   █████╗  ██████╔╝
-██║   ██║██╔═══╝ ██║  ██║██╔══██║   ██║   ██╔══╝  ██╔══██╗
-╚██████╔╝██║     ██████╔╝██║  ██║   ██║   ███████╗██║  ██║
- ╚═════╝ ╚═╝     ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝
-        """
-        faded_updater = fade.purpleblue(titleUpdater)
-        print(faded_updater)
-        time.sleep(.07)
-        print(f"{lb}[{w}!{lb}] {Fore.WHITE}A new version ({latest_version}) is available!")
-        time.sleep(.07)
-        print(f'{lr}[{w}!{lr}] BEWARE! {w}This system is still new so if you encounter problems please contact me on discord (cidthefish). If you are using the executable type 1. If you are using the script type 2.')
-        time.sleep(.07)
-        # Ask if the user wants to update the script or executable
-        choice = input(f"\n{bb}[{w}>{bb}]{w} {Fore.WHITE}Do you want to update the executable (1) or the script (2)? ").strip()
-
-        if choice == '1':
-            print(f"{Fore.LIGHTBLUE_EX}[Updating Executable] {Fore.WHITE}Downloading new executable...")
-
-            # Find the latest executable file in the release assets
-            for asset in release_data['assets']:
-                if asset['name'].endswith('.exe'):
-                    exe_url = asset['browser_download_url']
-                    break
-            else:
-                print(f"{Fore.LIGHTRED_EX}[Error] {Fore.WHITE}No executable (.exe) found in the latest release.")
-                return
-
-            # Download the new executable
-            response = requests.get(exe_url)
-            with open("novelscraper.exe", "wb") as f:
-                f.write(response.content)
-            print(f"{Fore.LIGHTCYAN_EX}[Executable Updated] {Fore.WHITE}Executable updated. Please restart the application.")
-
-        elif choice == '2':
-            print(f"{Fore.LIGHTBLUE_EX}[Updating Script] {Fore.WHITE}Downloading new script...")
-
-            # Download the new script file
-            response = requests.get(SCRIPT_URL)
-            with open("novelscraper.py", "wb") as f:
-                f.write(response.content)
-            print(f"{Fore.LIGHTCYAN_EX}[Script Updated] {Fore.WHITE}Script updated. Please restart the application.")
-
-        else:
-            print(f"{Fore.LIGHTRED_EX}[Error] {Fore.WHITE}Invalid choice. No update performed.")
-    else:
-        print(f"{Fore.LIGHTGREEN_EX}[Up-to-Date] {Fore.WHITE}You are using the latest version ({current_version}).")
 
 
 def create_novel_folder(driver):
@@ -301,7 +224,6 @@ def main():
     while True:
         os.system('cls' if os.name == 'nt' else 'clear')
         Spinner()
-        check_for_updates(VERSION)
         global chrome_driver_path
 
         if chrome_driver_path == "NONE" or chrome_driver_path == "C:/Program Files":
@@ -363,6 +285,13 @@ def main():
  |___/\_, | (_)  \___|_\__,_|\__|_||_\___|_| |_/__/_||_|
       |__/                                                                                
 """
+        print(f'Loading {g}[VERSION{g}] {Fore.CYAN}{VERSION}')
+        random_loading_medium = random.uniform(0.7, 1.5)
+        time.sleep(random_loading_medium)
+        print(f'{g}[{w}!{g}] Version: {Fore.CYAN}{VERSION} {g}Loaded!')
+        random_loading_small = random.uniform(0.4, 0.9)
+        time.sleep(random_loading_small)
+        os.system('cls' if os.name == 'nt' else 'clear')
         faded_title = fade.purplepink(titlecard)
         faded_name = fade.pinkred(namecard)
         print(faded_title)
