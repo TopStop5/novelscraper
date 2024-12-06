@@ -1,4 +1,4 @@
-import os, time, sys, textwrap, json
+import os, time, sys, textwrap, json, requests
 from colorama import Back, Fore, Style
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -6,6 +6,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
 try:
     import fade
 except ImportError:
@@ -21,9 +22,16 @@ try:
 except ImportError:
     os.system("pip install selenium==4.26.1")
     import selenium
+try:
+    from webdriver_manager.chrome import ChromeDriverManager
+except ImportError:
+    os.system("pip install webdriver-manager")
+    from webdriver_manager.chrome import ChromeDriverManager
 
 chrome_browser_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"  # Path to your Chrome browser
 chrome_driver_path = "NONE"
+VERSION = "1.0.1"
+
 if os.path.exists('config.json'):
     try:
         with open('config.json', 'r') as f:
@@ -47,11 +55,11 @@ y = Fore.YELLOW
 gg = Fore.GREEN
 
 def Spinner():
-	l = ['|', '/', '-', '\\', ' ']
-	for i in l+l+l:
-		sys.stdout.write(f"""\r {i}""")
-		sys.stdout.flush()
-		time.sleep(0.1)
+    l = ['|', '/', '-', '\\', ' ']
+    for i in l+l+l:
+        sys.stdout.write(f"""\r {i}""")
+        sys.stdout.flush()
+        time.sleep(0.1)
 
 def dismiss_popup(driver):
     time.sleep(2)
@@ -61,7 +69,86 @@ def dismiss_popup(driver):
         print(f"{g}[{w}!{g}] {w}Skipped popup...")
     except Exception as e:
         pass
-        print(f"{y}[{w}!{y}] {w}No Pop-up\'s detected or couldn't click: {e}")
+        print(f"{y}[{w}!{y}] {w}No Pop-up's detected or couldn't click: {e}")
+
+def check_for_updates(current_version):
+    # Define the URL for GitHub releases API
+    RELEASES_API_URL = "https://api.github.com/repos/TopStop5/novelscraper/releases/latest"
+    SCRIPT_URL = "https://raw.githubusercontent.com/TopStop5/novelscraper/main/novelscraper.py"
+
+    # Read the current version from the local version file (if exists)
+    try:
+        with open("version.txt", "r") as f:
+            stored_version = f.read().strip()
+    except FileNotFoundError:
+        stored_version = None  # No version file found
+
+    # If there's no version file, create one with the current version
+    if stored_version != current_version:
+        with open("version.txt", "w") as f:
+            f.write(current_version)
+
+    # Get the latest release info from GitHub
+    response = requests.get(RELEASES_API_URL)
+    if response.status_code != 200:
+        print(f"{Fore.LIGHTRED_EX}[Error] {Fore.WHITE}Error fetching release data.")
+        return
+
+    release_data = response.json()
+    latest_version = release_data['tag_name']  # Version info is in the 'tag_name' field
+
+    if latest_version != current_version:
+        # If there is a new version, update the version file
+        titleUpdater = """
+██╗   ██╗██████╗ ██████╗  █████╗ ████████╗███████╗██████╗ 
+██║   ██║██╔══██╗██╔══██╗██╔══██╗╚══██╔══╝██╔════╝██╔══██╗
+██║   ██║██████╔╝██║  ██║███████║   ██║   █████╗  ██████╔╝
+██║   ██║██╔═══╝ ██║  ██║██╔══██║   ██║   ██╔══╝  ██╔══██╗
+╚██████╔╝██║     ██████╔╝██║  ██║   ██║   ███████╗██║  ██║
+ ╚═════╝ ╚═╝     ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝
+        """
+        faded_updater = fade.purpleblue(titleUpdater)
+        print(faded_updater)
+        time.sleep(.07)
+        print(f"{lb}[{w}!{lb}] {Fore.WHITE}A new version ({latest_version}) is available!")
+        time.sleep(.07)
+        print(f'{lr}[{w}!{lr}] BEWARE! {w}This system is still new so if you encounter problems please contact me on discord (cidthefish). If you are using the executable type 1. If you are using the script type 2.')
+        time.sleep(.07)
+        # Ask if the user wants to update the script or executable
+        choice = input(f"\n{bb}[{w}>{bb}]{w} {Fore.WHITE}Do you want to update the executable (1) or the script (2)? ").strip()
+
+        if choice == '1':
+            print(f"{Fore.LIGHTBLUE_EX}[Updating Executable] {Fore.WHITE}Downloading new executable...")
+
+            # Find the latest executable file in the release assets
+            for asset in release_data['assets']:
+                if asset['name'].endswith('.exe'):
+                    exe_url = asset['browser_download_url']
+                    break
+            else:
+                print(f"{Fore.LIGHTRED_EX}[Error] {Fore.WHITE}No executable (.exe) found in the latest release.")
+                return
+
+            # Download the new executable
+            response = requests.get(exe_url)
+            with open("novelscraper.exe", "wb") as f:
+                f.write(response.content)
+            print(f"{Fore.LIGHTCYAN_EX}[Executable Updated] {Fore.WHITE}Executable updated. Please restart the application.")
+
+        elif choice == '2':
+            print(f"{Fore.LIGHTBLUE_EX}[Updating Script] {Fore.WHITE}Downloading new script...")
+
+            # Download the new script file
+            response = requests.get(SCRIPT_URL)
+            with open("novelscraper.py", "wb") as f:
+                f.write(response.content)
+            print(f"{Fore.LIGHTCYAN_EX}[Script Updated] {Fore.WHITE}Script updated. Please restart the application.")
+
+        else:
+            print(f"{Fore.LIGHTRED_EX}[Error] {Fore.WHITE}Invalid choice. No update performed.")
+    else:
+        print(f"{Fore.LIGHTGREEN_EX}[Up-to-Date] {Fore.WHITE}You are using the latest version ({current_version}).")
+
 
 def create_novel_folder(driver):
     try:
@@ -126,6 +213,7 @@ def download_chapters(driver, novel_url, start_chapter, end_chapter, folder_path
 
         while interval_start <= interval_end:
             page_url = f"{base_url}?page={current_page}"
+            time.sleep(.02)
             print(f"{g}[{w}!{g}] {w}Navigating to {page_url}")
             driver.get(page_url)
 
@@ -139,6 +227,7 @@ def download_chapters(driver, novel_url, start_chapter, end_chapter, folder_path
 
             chapter_list = driver.find_elements(By.XPATH, "//ul[@class='chapter-list']/li")
             if not chapter_list:
+                time.sleep(.007)
                 print(f"{g}[{w}!{g}] {w}No chapters found on this page. Moving to the next page.")
                 current_page += 1
                 continue
@@ -157,6 +246,7 @@ def download_chapters(driver, novel_url, start_chapter, end_chapter, folder_path
                 if interval_start <= chapter_number <= interval_end:
                     chapter_url = chapter.find_element(By.TAG_NAME, 'a').get_attribute('href')
                     chapter_title = f"Chapter {chapter_number}"
+                    time.sleep(.02)
                     print(f"{g}[{w}!{g}] {w}Downloading {chapter_title} from {chapter_url}")
                     scrape_chapter(driver, chapter_url, chapter_title, folder_path)
 
@@ -171,34 +261,93 @@ def download_chapters(driver, novel_url, start_chapter, end_chapter, folder_path
 
         interval_start = max(interval_start, interval_end + 1)
         interval_end = min(interval_start + chapters_per_page - 1, end_chapter)
+        time.sleep(.02)
         print(f"{gg}[{w}!{gg}] {w}Finished processing chapters up to {interval_start - 1}. Moving to the next interval.")
+
+def check_and_set_driver():
+    global chrome_driver_path
+    if chrome_driver_path == "NONE" or chrome_driver_path == "C:/Program Files":
+        # If the path is "NONE" or the default, prompt for input
+        driver_exists = input(f'{bb}[{w}>{bb}]{w} Do you have a ChromeDriver? (Y/N): ').strip().lower()
+
+        if driver_exists == "Y".lower:
+            chrome_driver_path = input(f'{bb}[{w}>{bb}]{w} Please input your ChromeDriver path: ')
+
+        elif driver_exists == "N".lower:
+            print(f"{bb}[{w}>{bb}]{w} Downloading ChromeDriver...")
+            # Here you would add your logic to download the appropriate ChromeDriver version
+
+            # For now, assume the driver is downloaded to the script's folder
+            chrome_driver_path = os.path.join(os.getcwd(), "chromedriver.exe")
+
+        # Update the config file with the ChromeDriver path
+        try:
+            with open('config.json', 'r') as f:
+                config = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            config = {}
+
+        config["DRIVERPATH"] = chrome_driver_path
+
+        # Write the updated configuration to the JSON file
+        with open('config.json', 'w') as f:
+            json.dump(config, f, indent=4)
+        print(f"{g}[{w}!{g}] {w}Driver path set to: {chrome_driver_path}")
+    else:
+        pass
 
 
 def main():
     while True:
         os.system('cls' if os.name == 'nt' else 'clear')
         Spinner()
+        check_for_updates(VERSION)
         global chrome_driver_path
 
         if chrome_driver_path == "NONE" or chrome_driver_path == "C:/Program Files":
-            # If the path is "NONE" or the default, prompt for input
-            chrome_driver_path = input(f'{bb}[{w}>{bb}]{w} Please input your chrome driver path: ')
-
-            # Update the config file with the new chrome driver path
-            try:
-                with open('config.json', 'r') as f:
-                    config = json.load(f)
-            except (FileNotFoundError, json.JSONDecodeError):
-                config = {}
-
-            config["DRIVERPATH"] = chrome_driver_path
-
-            # Write the updated configuration to the JSON file
-            with open('config.json', 'w') as f:
-                json.dump(config, f, indent=4)
-
-        else:
-            pass
+            # Ask user if they have ChromeDriver
+            have_driver = input(f'\n{bb}[{w}>{bb}]{w}Do you have ChromeDriver installed? (Y/N): ').strip().lower()
+    
+            if have_driver == 'y':
+                chrome_driver_path = input(f'{bb}[{w}>{bb}]{w}Please input your chrome driver path: ').strip()
+    
+                # Update config.json with the new path
+                try:
+                    with open('config.json', 'r') as f:
+                        config = json.load(f)
+                except (FileNotFoundError, json.JSONDecodeError):
+                    config = {}
+    
+                config["DRIVERPATH"] = chrome_driver_path
+    
+                # Write the updated configuration to the JSON file
+                with open('config.json', 'w') as f:
+                    json.dump(config, f, indent=4)
+                print(f"{g}[{w}!{g}] {w}Driver path saved to config.json.")
+    
+            elif have_driver == 'n':
+                print(f"{g}[{w}!{g}] {w}Downloading ChromeDriver...")
+    
+                # Use webdriver-manager to download and set up the driver
+                chrome_driver_path = ChromeDriverManager().install()
+    
+                # Update config.json with the downloaded driver path
+                try:
+                    with open('config.json', 'r') as f:
+                        config = json.load(f)
+                except (FileNotFoundError, json.JSONDecodeError):
+                    config = {}
+    
+                config["DRIVERPATH"] = chrome_driver_path
+    
+                # Write the updated configuration to the JSON file
+                with open('config.json', 'w') as f:
+                    json.dump(config, f, indent=4)
+                print(f"{g}[{w}!{g}] {w}ChromeDriver downloaded and saved to config.json.")
+            else:
+                print(f"{lr}[{w}!{lr}] {w}Invalid input, try again.")
+                time.sleep(1)
+                continue
         os.system('cls' if os.name == 'nt' else 'clear')
         titlecard = """
  ▐ ▄        ▌ ▐·▄▄▄ .▄▄▌      .▄▄ ·  ▄▄· ▄▄▄   ▄▄▄·  ▄▄▄·▄▄▄ .▄▄▄  
@@ -217,9 +366,11 @@ def main():
         faded_title = fade.purplepink(titlecard)
         faded_name = fade.pinkred(namecard)
         print(faded_title)
+        time.sleep(.02)
         print(faded_name)
-        print('To reset driver path please type RESET')
-        
+        time.sleep(.02)
+        print(f'{y}[{w}!{y}] Information: To reset driver path please type "RESET". To Exit type "EXIT"')
+        time.sleep(.07)
         novel_url = input(f"{bb}[{w}>{bb}]{w} Enter the novel URL (type EXIT to exit): ").strip().lower()
         supported_sites = ('lightnovelcave', 'exit', 'reset')
         
@@ -286,6 +437,6 @@ def main():
         driver.quit()
         time.sleep(2)
         os.system('cls' if os.name == 'nt' else 'clear')    
-        break
+        continue
 if __name__ == "__main__":
     main()
