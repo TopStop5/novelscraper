@@ -32,6 +32,7 @@ Valid links look like this https://www.lightnovelcave.com/novel/the-beginning-af
 
 
 ## <a id="Installation"></a>📦〢 Installation
+⚠️ WARNING ⚠️ THIS IS NOT TESTED ON ANY OTHER OS BESIDES WINDOWS. GOODLUCK
 ### **MacOS**
 
 #### Downloading the code
@@ -52,9 +53,11 @@ $ python main.py
 ```
 
 #### Downloading ChromeDriver
+##### MANUAL:
 ChromeDriver is required to run this, therefore install it from [here](https://googlechromelabs.github.io/chrome-for-testing/#dev)
 Download the Dev version for MacOS and unzip the folder. Copy the Path and when you run the program it'll ask you for the path. To reset the path type RESET.
-
+##### AUTOMATIC:
+Just run the script and It'll ask you if you have ChromeDriver installed, if you do have it installed then it'll ask you to input the path but if you dont then it'll install it for you
 <img src = ".\images\chromedriver.png">
 
 ### **Windows**
@@ -88,12 +91,15 @@ $ python main.py
 ```
 
 #### Downloading ChromeDriver
+##### MANUAL:
 ChromeDriver is required to run this, therefore install it from [here](https://googlechromelabs.github.io/chrome-for-testing/#dev)
 Download the Dev version for Windows and unzip the folder. Copy the Path and when you run the program it'll ask you for the path. When copying the path its essential that you right click the EXE file and copy as path. To reset the path type RESET.
 <img src = ".\images\chromedriver.png">
+##### AUTOMATIC:
+Just run the script and It'll ask you if you have ChromeDriver installed, if you do have it installed then it'll ask you to input the path but if you dont then it'll install it for you
 
 ### **Linux**
-idk bruh your on your own
+idk broski yall on your own for now 😭
 
 ## <a id="license"></a>📜〢License
 MIT License
