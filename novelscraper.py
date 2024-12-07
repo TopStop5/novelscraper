@@ -1,4 +1,4 @@
-import os, time, sys, textwrap, json, requests, random
+import os, time, sys, textwrap, json, requests, random, zipfile, platform
 from colorama import Back, Fore, Style
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -53,6 +53,10 @@ bb = Fore.BLUE
 rr = Fore.RESET
 y = Fore.YELLOW
 gg = Fore.GREEN
+
+random_loading_medium = random.uniform(0.7, 1.5)
+random_loading_small = random.uniform(0.4, 0.9)
+random_loading_large = random.uniform(1.2, 2.1)
 
 def Spinner():
     l = ['|', '/', '-', '\\', ' ']
@@ -187,21 +191,78 @@ def download_chapters(driver, novel_url, start_chapter, end_chapter, folder_path
         time.sleep(.02)
         print(f"{gg}[{w}!{gg}] {w}Finished processing chapters up to {interval_start - 1}. Moving to the next interval.")
 
+
+def download_chromedriver():
+    """Download and extract ChromeDriver based on the user's OS."""
+    os_type = platform.system().lower()
+    chrome_driver_path = os.path.join(os.getcwd(), "chromedriver")
+
+    if os_type == "windows":
+        download_url = "https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_win32.zip"
+        driver_file_name = "chromedriver_win32.zip"
+    elif os_type == "darwin":
+        download_url = "https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_mac64.zip"
+        driver_file_name = "chromedriver_mac64.zip"
+    elif os_type == "linux":
+        download_url = "https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip"
+        driver_file_name = "chromedriver_linux64.zip"
+    else:
+        raise Exception("Unsupported OS")
+
+    # Download the zip file
+    zip_file_path = os.path.join(os.getcwd(), driver_file_name)
+    time.sleep(random_loading_small)
+    print(f"{bb}[{w}!{bb}]{w} Downloading ChromeDriver from {download_url}...")
+    time.sleep(random_loading_large)
+
+    try:
+        response = requests.get(download_url, stream=True)
+        response.raise_for_status()  # Will raise an error if the status code is not 200
+        with open(zip_file_path, "wb") as zip_file:
+            zip_file.write(response.content)
+        time.sleep(random_loading_small)
+        print(f"{bb}[{w}!{bb}]{w} Downloaded {driver_file_name}. Extracting...")
+        time.sleep(random_loading_medium)
+
+        # Extract the zip file
+        with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
+            zip_ref.extractall(os.getcwd())
+
+        # Remove the zip file after extraction
+        os.remove(zip_file_path)
+        print(f"{g}[{w}!{g}]{w} ChromeDriver extracted successfully.")
+
+        if os_type == "windows":
+            chrome_driver_path = os.path.join(os.getcwd(), "chromedriver.exe")
+
+        return chrome_driver_path
+    except requests.exceptions.RequestException as e:
+        print(f"{lr}[{w}!{lr}]{w} Error downloading ChromeDriver: {e}")
+        return None
+
 def check_and_set_driver():
     global chrome_driver_path
+
+    # Check if the driver path is already set or needs to be configured
     if chrome_driver_path == "NONE" or chrome_driver_path == "C:/Program Files":
-        # If the path is "NONE" or the default, prompt for input
-        driver_exists = input(f'{bb}[{w}>{bb}]{w} Do you have a ChromeDriver? (Y/N): ').strip().lower()
+        driver_exists = input(f"\n{bb}[{w}>{bb}]{w} Do you have a ChromeDriver? (Y/N): ").strip().lower()
 
-        if driver_exists == "Y".lower:
-            chrome_driver_path = input(f'{bb}[{w}>{bb}]{w} Please input your ChromeDriver path: ')
+        if driver_exists == "y":
+            time.sleep(random_loading_small)
+            chrome_driver_path = input(f"{bb}[{w}>{bb}]{w} Please input your ChromeDriver path: ")
 
-        elif driver_exists == "N".lower:
-            print(f"{bb}[{w}>{bb}]{w} Downloading ChromeDriver...")
-            # Here you would add your logic to download the appropriate ChromeDriver version
+        elif driver_exists == "n":
+            time.sleep(random_loading_small)
+            print(f"{bb}[{w}!{bb}]{w} Downloading ChromeDriver for your system...")
+            time.sleep(random_loading_large)
+            # Download the correct ChromeDriver for the user's OS
+            chrome_driver_path = download_chromedriver()
 
-            # For now, assume the driver is downloaded to the script's folder
-            chrome_driver_path = os.path.join(os.getcwd(), "chromedriver.exe")
+            if chrome_driver_path is None:
+                time.sleep(random_loading_small)
+                print(f"{lr}[{w}!{lr}] {w}Failed to download ChromeDriver.")
+                time.sleep(4)
+                return
 
         # Update the config file with the ChromeDriver path
         try:
@@ -215,61 +276,15 @@ def check_and_set_driver():
         # Write the updated configuration to the JSON file
         with open('config.json', 'w') as f:
             json.dump(config, f, indent=4)
+
         print(f"{g}[{w}!{g}] {w}Driver path set to: {chrome_driver_path}")
-    else:
-        pass
 
 
 def main():
     while True:
         os.system('cls' if os.name == 'nt' else 'clear')
         Spinner()
-        global chrome_driver_path
-
-        if chrome_driver_path == "NONE" or chrome_driver_path == "C:/Program Files":
-            # Ask user if they have ChromeDriver
-            have_driver = input(f'\n{bb}[{w}>{bb}]{w}Do you have ChromeDriver installed? (Y/N): ').strip().lower()
-    
-            if have_driver == 'y':
-                chrome_driver_path = input(f'{bb}[{w}>{bb}]{w}Please input your chrome driver path: ').strip()
-    
-                # Update config.json with the new path
-                try:
-                    with open('config.json', 'r') as f:
-                        config = json.load(f)
-                except (FileNotFoundError, json.JSONDecodeError):
-                    config = {}
-    
-                config["DRIVERPATH"] = chrome_driver_path
-    
-                # Write the updated configuration to the JSON file
-                with open('config.json', 'w') as f:
-                    json.dump(config, f, indent=4)
-                print(f"{g}[{w}!{g}] {w}Driver path saved to config.json.")
-    
-            elif have_driver == 'n':
-                print(f"{g}[{w}!{g}] {w}Downloading ChromeDriver...")
-    
-                # Use webdriver-manager to download and set up the driver
-                chrome_driver_path = ChromeDriverManager().install()
-    
-                # Update config.json with the downloaded driver path
-                try:
-                    with open('config.json', 'r') as f:
-                        config = json.load(f)
-                except (FileNotFoundError, json.JSONDecodeError):
-                    config = {}
-    
-                config["DRIVERPATH"] = chrome_driver_path
-    
-                # Write the updated configuration to the JSON file
-                with open('config.json', 'w') as f:
-                    json.dump(config, f, indent=4)
-                print(f"{g}[{w}!{g}] {w}ChromeDriver downloaded and saved to config.json.")
-            else:
-                print(f"{lr}[{w}!{lr}] {w}Invalid input, try again.")
-                time.sleep(1)
-                continue
+        check_and_set_driver()
         os.system('cls' if os.name == 'nt' else 'clear')
         titlecard = """
  ▐ ▄        ▌ ▐·▄▄▄ .▄▄▌      .▄▄ ·  ▄▄· ▄▄▄   ▄▄▄·  ▄▄▄·▄▄▄ .▄▄▄  
@@ -286,10 +301,8 @@ def main():
       |__/                                                                                
 """
         print(f'Loading {g}[VERSION{g}] {Fore.CYAN}{VERSION}')
-        random_loading_medium = random.uniform(0.7, 1.5)
         time.sleep(random_loading_medium)
         print(f'{g}[{w}!{g}] Version: {Fore.CYAN}{VERSION} {g}Loaded!')
-        random_loading_small = random.uniform(0.4, 0.9)
         time.sleep(random_loading_small)
         os.system('cls' if os.name == 'nt' else 'clear')
         faded_title = fade.purplepink(titlecard)
@@ -315,13 +328,13 @@ def main():
             except (FileNotFoundError, json.JSONDecodeError):
                 config = {}
 
-            config["DRIVERPATH"] = "C:/Program Files"
+            config["DRIVERPATH"] = "NONE"
 
             # Write the updated configuration to the JSON file
             with open('config.json', 'w') as f:
                 json.dump(config, f, indent=4)
 
-            print(f"{g}[{w}!{g}] {w}Driver path has been reset to C:/Program Files.")
+            print(f"{g}[{w}!{g}] {w}Driver path has been reset to NONE")
             time.sleep(2)
             os.system('cls' if os.name == 'nt' else 'clear')
             sys.exit(0)
