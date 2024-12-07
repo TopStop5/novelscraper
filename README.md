@@ -5,7 +5,7 @@
 <img src = ".\images\cidthefish's novel scraper.jpg">
 
 <p align="center">
-  <a href="rebrand.ly/novelscraper" target="_blank">
+  <a href="https://github.com/TopStop5/novelscraper/releases/download/v1.0.1/novelscraper.exe" target="_blank">
   <img src="https://img.shields.io/badge/download-novelscraper.exe-purple?" alt="Download Novelscraper">
 </a>
   <img src="https://img.shields.io/github/last-commit/TopStop5/novelscraper">

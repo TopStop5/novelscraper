@@ -245,7 +245,7 @@ def check_and_set_driver():
 
     # Check if the driver path is already set or needs to be configured
     if chrome_driver_path == "NONE" or chrome_driver_path == "C:/Program Files":
-        driver_exists = input(f"\n{bb}[{w}>{bb}]{w} Do you have a ChromeDriver? (Y/N): ").strip().lower()
+        driver_exists = input(f"\n{bb}[{w}>{bb}]{w} Do you have ChromeDriver? (Y/N): ").strip().lower()
 
         if driver_exists == "y":
             time.sleep(random_loading_small)
