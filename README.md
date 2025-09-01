@@ -26,8 +26,10 @@
 ## <a id="info"></a>🌟〢Information
 This is a free and open source scraper for the site lightnovelcave. Other sites are currently not supported but I'm working to include them.
 
-## <a id="valid"></a>✅〢 Valid links
-Valid links look like this https://www.lightnovelcave.com/novel/the-beginning-after-the-end-web-novel-11110049 or https://www.lightnovelcave.com/novel/the-beginning-after-the-end-web-novel-11110049/chapters/ 
+## <a id="valid"></a>✅〢 Supported Sites + Valid links
+Supported sites are: Novelfire, WeTriedTLS
+
+Valid links look like this https://wetriedtls.com/series/a-regressors-tale-of-cultivation or https://novelfire.net/book/shadow-slave 
 
 
 
