@@ -36,7 +36,7 @@ except ImportError:
 
 chrome_browser_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 chrome_driver_path = "NONE"
-VERSION = "2.0"
+VERSION = "2.1.1"
 
 if os.path.exists('config.json'):
     try:
@@ -106,44 +106,80 @@ def save_as_epub(folder_path, novel_title):
         return re.sub(r'[\\/*?:"<>|]', '-', name).strip()
 
     def extract_chapter_number(name):
-        # Extract first number in filename
-        m = re.search(r'(\d+)', name)
-        return int(m.group(1)) if m else float('inf')
+        # Prefer patterns like "chapter 12" or "chapter_12", case-insensitive.
+        m = re.search(r'chapter[^0-9]*?(\d+(?:\.\d+)?)', name, flags=re.IGNORECASE)
+        if m:
+            num = m.group(1)
+            try:
+                return int(num) if '.' not in num else float(num)
+            except:
+                return float('inf')
+        # fallback: first standalone number
+        m2 = re.search(r'(\d+(?:\.\d+)?)', name)
+        if m2:
+            num = m2.group(1)
+            try:
+                return int(num) if '.' not in num else float(num)
+            except:
+                return float('inf')
+        return float('inf')
+
+    def natural_key(s):
+        # tie-breaker to keep consistent ordering
+        parts = re.split(r'(\d+)', s.lower())
+        return [int(p) if p.isdigit() else p for p in parts]
 
     txt_files = glob.glob(os.path.join(folder_path, '*.txt'))
     if not txt_files:
-        print("No .txt files found to convert.")
+        print(f"{rr}[{w}X{rr}]{w} No .txt files found to convert.")
         return
 
-    # Sort files by chapter number
-    txt_files.sort(key=lambda f: extract_chapter_number(os.path.basename(f)))
+    # Build a list with extracted numbers, then sort numerically ascending (oldest -> newest).
+    files_with_nums = []
+    for p in txt_files:
+        base = os.path.basename(p)
+        num = extract_chapter_number(base)
+        files_with_nums.append((num, base, p))
 
+    files_with_nums.sort(key=lambda x: (x[0], natural_key(x[1])))
+
+    sorted_files = [item[2] for item in files_with_nums]
+
+    # Create EPUB
     book = epub.EpubBook()
     book.set_identifier(safe_filename(novel_title.lower()) or "novel")
     book.set_title(novel_title)
     book.set_language("en")
-    book.add_author("Novelscraper by Cidthefish")
+    # Add author metadata properly
+    book.add_author("Novelscraper by TopStop5")
+    # Also add explicit DC metadata to help some readers (iOS Books)
+    try:
+        book.add_metadata('DC', 'creator', 'Novelscraper by TopStop5')
+        book.add_metadata('DC', 'title', novel_title)
+    except Exception:
+        # ignore if ebooklib version behaves differently
+        pass
 
     chapters = []
-    total_chaps = len(txt_files)
-    zero_pad = len(str(total_chaps))  # determine zero padding based on total chapters
+    total_chaps = len(sorted_files)
+    zero_pad = len(str(total_chaps))
 
-    for idx, file_path in enumerate(txt_files, 1):
+    for idx, file_path in enumerate(sorted_files, 1):
         fname = os.path.basename(file_path)
         chap_title = os.path.splitext(fname)[0]
         with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
             text = f.read()
+
+        # Keep paragraphs split by blank lines
         paras = [p.strip() for p in re.split(r'(?:\r?\n){2,}', text) if p.strip()]
         html_body = ''.join(f'<p>{html.escape(p)}</p>' for p in paras)
         html_doc = f'<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>{html.escape(chap_title)}</title></head><body>{html_body}</body></html>'
 
-        # Zero-padded filenames for EPUB
         ch = epub.EpubHtml(title=chap_title, file_name=f'chapter_{str(idx).zfill(zero_pad)}.xhtml', lang='en')
         ch.content = html_doc
         book.add_item(ch)
         chapters.append(ch)
 
-    # Set Table of Contents and spine
     book.toc = chapters
     book.spine = ['nav'] + chapters
     book.add_item(epub.EpubNcx())
@@ -151,7 +187,7 @@ def save_as_epub(folder_path, novel_title):
 
     output_path = os.path.join(folder_path, f"{safe_filename(novel_title)}.epub")
     epub.write_epub(output_path, book)
-    print(f"\n EPUB created: {output_path}")
+    print(f"\n{g}[{w}!{g}]{w} EPUB created: {output_path}")
 
 def lnccreate_novel_folder(driver):
     try:
@@ -609,7 +645,7 @@ def handle_helioscans(driver, novel_url):
         book.set_identifier(novel_title.replace(" ", "_"))
         book.set_title(novel_title)
         book.set_language("en")
-        book.add_author("Novelscraper by Cidthefish")
+        book.add_author("Novelscraper by TopStop5")
 
         chapters = []
         for idx, file_path in enumerate(txt_files, 1):
@@ -1004,9 +1040,9 @@ $$ |  $$\ $$ |  $$ |$$ |  $$ | \$$$  /  $$   ____|$$ |       $$ |$$\
             book.set_identifier(folder_path)
             book.set_title(folder_path)
             book.set_language('en')
-            book.add_author('Novelscraper by Cidthefish')
+            book.add_author('Novelscraper by TopStop5')
             book.add_metadata('DC', 'title', folder_path)
-            book.add_metadata('DC', 'creator', 'Novelscraper by Cidthefish', {'id': 'creator', 'opf:role': 'aut'})
+            book.add_metadata('DC', 'creator', 'Novelscraper by TopStop5', {'id': 'creator', 'opf:role': 'aut'})
 
             for chap_num in selected_chapters:
                 file_path = os.path.join(folder_path, chapter_nums[chap_num])
