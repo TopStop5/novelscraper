@@ -36,7 +36,7 @@ except ImportError:
 
 chrome_browser_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 chrome_driver_path = "NONE"
-VERSION = "2.1.1"
+VERSION = "2.2"
 
 if os.path.exists('config.json'):
     try:
@@ -426,6 +426,7 @@ def check_and_set_driver():
         if driver_exists == "y":
             time.sleep(random_loading_small)
             chrome_driver_path = input(f"{bb}[{w}>{bb}]{w} Please input your ChromeDriver path: ").strip()
+            print(f"{bb}[{w}!{bb}] {w}Driver path set to: {chrome_driver_path}")
 
         elif driver_exists == "n":
             time.sleep(random_loading_small)
@@ -851,7 +852,7 @@ def main():
         print(f'{y}[{w}!{y}] Information: To reset driver path please type "RESET". To Exit type "EXIT"')
         time.sleep(.07)
         print(f'''
-{lr}[{w}1{lr}]{w} Scrape a novel  {b}|{Fore.RESET}{lr}[{w}2{lr}]{w} Convert txt to epub   {b}|{Fore.RESET}{lr}[{w}3{lr}]{w} [BLANK]
+{lr}[{w}1{lr}]{w} Scrape a novel  {b}|{Fore.RESET}{lr}[{w}2{lr}]{w} Convert txt to epub   {b}|{Fore.RESET}{lr}[{w}3{lr}]{w} [COMING SOON]
 ''')
 
         choice = input(f'{bb}[{w}>{bb}]{w} What would you like to do?: ').strip()
@@ -861,7 +862,16 @@ def main():
             Spinner()
             time.sleep(.2)
             sys.exit(0)
-
+        if choice.lower() == 'reset':
+            try: 
+                with open('config.json', 'r') as f: config = json.load(f) 
+            except (FileNotFoundError, json.JSONDecodeError):
+                config = {}
+            config["DRIVERPATH"] = "NONE"
+            with open('config.json', 'w') as f: json.dump(config, f, indent=4)
+            print(f"{bb}[{w}!{bb}] {w}Driver path has been reset to NONE") 
+            time.sleep(.67) 
+            press_any_key()
         if choice == '1':
             os.system('cls' if os.name == 'nt' else 'clear')
             time.sleep(.2)
@@ -1062,6 +1072,29 @@ $$ |  $$\ $$ |  $$ |$$ |  $$ | \$$$  /  $$   ____|$$ |       $$ |$$\
             epub_name = os.path.join(folder_path, f"{folder_path}.epub")
             epub.write_epub(epub_name, book)
             print(f"EPUB created: {epub_name}")
+            press_any_key()
+        
+        if choice == '3':
+            os.system('cls' if os.name == 'nt' else 'clear')
+            time.sleep(0.2)
+            Spinner()
+            time.sleep(0.09)
+            os.system('cls' if os.name == 'nt' else 'clear')
+            comingsoontitle = """
+ $$$$$$\                          $$\                            $$$$$$\                                
+$$  __$$\                         \__|                          $$  __$$\                               
+$$ /  \__| $$$$$$\  $$$$$$\$$$$\  $$\ $$$$$$$\   $$$$$$\        $$ /  \__| $$$$$$\   $$$$$$\  $$$$$$$\  
+$$ |      $$  __$$\ $$  _$$  _$$\ $$ |$$  __$$\ $$  __$$\       \$$$$$$\  $$  __$$\ $$  __$$\ $$  __$$\ 
+$$ |      $$ /  $$ |$$ / $$ / $$ |$$ |$$ |  $$ |$$ /  $$ |       \____$$\ $$ /  $$ |$$ /  $$ |$$ |  $$ |
+$$ |  $$\ $$ |  $$ |$$ | $$ | $$ |$$ |$$ |  $$ |$$ |  $$ |      $$\   $$ |$$ |  $$ |$$ |  $$ |$$ |  $$ |
+\$$$$$$  |\$$$$$$  |$$ | $$ | $$ |$$ |$$ |  $$ |\$$$$$$$ |      \$$$$$$  |\$$$$$$  |\$$$$$$  |$$ |  $$ |
+ \______/  \______/ \__| \__| \__|\__|\__|  \__| \____$$ |       \______/  \______/  \______/ \__|  \__|
+                                                $$\   $$ |                                              
+                                                \$$$$$$  |                                              
+                                                 \______/                                               
+"""
+            faded_comingsoontitle =  fade.purplepink(comingsoontitle)
+            print(faded_comingsoontitle)
             press_any_key()
 
 
