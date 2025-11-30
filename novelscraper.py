@@ -36,7 +36,7 @@ except ImportError:
 
 chrome_browser_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 chrome_driver_path = "NONE"
-VERSION = "2.2"
+VERSION = "2.3"
 
 if os.path.exists('config.json'):
     try:
@@ -106,7 +106,6 @@ def save_as_epub(folder_path, novel_title):
         return re.sub(r'[\\/*?:"<>|]', '-', name).strip()
 
     def extract_chapter_number(name):
-        # Prefer patterns like "chapter 12" or "chapter_12", case-insensitive.
         m = re.search(r'chapter[^0-9]*?(\d+(?:\.\d+)?)', name, flags=re.IGNORECASE)
         if m:
             num = m.group(1)
@@ -114,7 +113,6 @@ def save_as_epub(folder_path, novel_title):
                 return int(num) if '.' not in num else float(num)
             except:
                 return float('inf')
-        # fallback: first standalone number
         m2 = re.search(r'(\d+(?:\.\d+)?)', name)
         if m2:
             num = m2.group(1)
@@ -125,7 +123,6 @@ def save_as_epub(folder_path, novel_title):
         return float('inf')
 
     def natural_key(s):
-        # tie-breaker to keep consistent ordering
         parts = re.split(r'(\d+)', s.lower())
         return [int(p) if p.isdigit() else p for p in parts]
 
@@ -134,7 +131,6 @@ def save_as_epub(folder_path, novel_title):
         print(f"{rr}[{w}X{rr}]{w} No .txt files found to convert.")
         return
 
-    # Build a list with extracted numbers, then sort numerically ascending (oldest -> newest).
     files_with_nums = []
     for p in txt_files:
         base = os.path.basename(p)
@@ -151,7 +147,7 @@ def save_as_epub(folder_path, novel_title):
     book.set_title(novel_title)
     book.set_language("en")
     # Add author metadata properly
-    book.add_author("Novelscraper by TopStop5")
+    book.add_author(f'TopStop5\'s Novelscraper')
     # Also add explicit DC metadata to help some readers (iOS Books)
     try:
         book.add_metadata('DC', 'creator', 'Novelscraper by TopStop5')
@@ -646,7 +642,7 @@ def handle_helioscans(driver, novel_url):
         book.set_identifier(novel_title.replace(" ", "_"))
         book.set_title(novel_title)
         book.set_language("en")
-        book.add_author("Novelscraper by TopStop5")
+        book.add_author(f'TopStop5\'s Novelscraper')
 
         chapters = []
         for idx, file_path in enumerate(txt_files, 1):
@@ -807,16 +803,134 @@ def handle_helioscans(driver, novel_url):
         if download_format == "epub":
             save_as_epub(folder_path, novel_title)
 
-        print(f"{gg}[{w}!{gg}]{w} Finished downloading chapters {start_chapter} to {end_chapter}.")
+        print(f"{bb}[{w}!{bb}]{w} Finished downloading chapters {start_chapter} to {end_chapter}.")
 
     except Exception as e:
         print(f"{r}[{w}X{r}]{w} Error in Helioscans handler: {e}")
+
+def handle_webnoveltranslations(driver, novel_url=None):
+    import os, re, time, random, html, glob
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+    from ebooklib import epub
+
+    def save_to_file(path, content):
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(content)
+
+    def save_as_epub(folder_path, novel_title):
+        txt_files = glob.glob(os.path.join(folder_path, "*.txt"))
+        if not txt_files:
+            print(f"{rr}[{w}!{rr}]{w} No .txt files found to convert.")
+            return
+        txt_files.sort()
+
+        book = epub.EpubBook()
+        book.set_identifier(novel_title.replace(" ", "_"))
+        book.set_title(novel_title)
+        book.set_language("en")
+        book.add_author(f'TopStop5\'s Novelscraper')
+
+        chapters = []
+        for idx, file_path in enumerate(txt_files, 1):
+            chap_title = os.path.splitext(os.path.basename(file_path))[0]
+            with open(file_path, "r", encoding="utf-8") as f:
+                text = f.read()
+            paras = [p.strip() for p in text.split("\n\n") if p.strip()]
+            html_content = "".join(f"<p>{html.escape(p)}</p>" for p in paras)
+
+            ch = epub.EpubHtml(title=chap_title, file_name=f"{idx:05d}.xhtml", lang="en")
+            ch.content = f"<h1>{chap_title}</h1>{html_content}"
+            book.add_item(ch)
+            chapters.append(ch)
+
+        book.toc = chapters
+        book.spine = ["nav"] + chapters
+        book.add_item(epub.EpubNcx())
+        book.add_item(epub.EpubNav())
+
+        output_path = os.path.join(folder_path, f"{novel_title}.epub")
+        epub.write_epub(output_path, book)
+        print(f"{bb}[{w}!{bb}]{w} EPUB created: {output_path}")
+
+    try:
+        driver.get(novel_url)
+        time.sleep(2)
+        try:
+            title_element = driver.find_element(By.TAG_NAME, "h1")
+            novel_title = title_element.text.strip()
+        except:
+            novel_title = driver.title.split("|")[0].strip()
+        novel_title = re.sub(r'(\s*[-:]\s*Chapter\s*\d+)$', '', novel_title, flags=re.IGNORECASE)
+
+        folder_name = novel_title.replace(':', ' -').replace('/', '-')
+        folder_path = os.path.join(os.getcwd(), folder_name)
+        os.makedirs(folder_path, exist_ok=True)
+        start_chapter = int(input(f"\n{bb}[{w}>{bb}]{w} Enter the starting chapter: ").strip())
+        end_chapter = int(input(f"\n{bb}[{w}>{bb}]{w} Enter the ending chapter: ").strip())
+
+        download_format = input(f"\n{bb}[{w}>{bb}]{w} Convert to epub or remain txt? (txt/epub): ").strip().lower()
+        if download_format not in ['txt', 'epub']:
+            download_format = 'txt'
+
+        failed_chapters = []
+
+        def try_download(chap_num):
+            if novel_url.endswith("/"):
+                chapter_url = f"{novel_url}chapter-{chap_num}/"
+            else:
+                chapter_url = f"{novel_url}/chapter-{chap_num}/"
+
+            print(f"{bb}[{w}!{bb}]{w} Downloading Chapter {chap_num} ({chapter_url})")
+            driver.execute_script("window.open('');")
+            driver.switch_to.window(driver.window_handles[-1])
+            driver.get(chapter_url)
+            try:
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "div#novel-chapter-container"))
+                )
+                container = driver.find_element(By.CSS_SELECTOR, "div#novel-chapter-container")
+                paragraphs = container.find_elements(By.TAG_NAME, "p")
+                lines = [p.text.strip() for p in paragraphs if p.text.strip()]
+                if not lines:
+                    print(f"{rr}[{w}!{rr}]{w} No text found for Chapter {chap_num}, skipping.")
+                    return False
+                content = "\n\n".join(lines)
+                filename = f"Chapter {chap_num}.txt"
+                save_to_file(os.path.join(folder_path, filename), content)
+                print(f"{bb}[{w}!{bb}]{w} Downloaded Chapter {chap_num}")
+                return True
+            except Exception:
+                print(f"Chapter {chap_num} not found or failed to load, skipping.")
+                return False
+            finally:
+                driver.close()
+                driver.switch_to.window(driver.window_handles[0])
+                time.sleep(random.uniform(0.5, 1.2))
+
+        for chap_num in range(start_chapter, end_chapter + 1):
+            if not try_download(chap_num):
+                failed_chapters.append(chap_num)
+
+        if failed_chapters:
+            print(f"{rr}[{w}!{rr}]{w} The following chapters failed or were missing: {failed_chapters}")
+
+        if download_format == "epub":
+            save_as_epub(folder_path, novel_title)
+
+        print(f"{bb}[{w}!{bb}]{w} Finished downloading chapters {start_chapter} to {end_chapter}.")
+
+    except Exception as e:
+        print(f"{rr}[{w}!{rr}]{w} Error in WebnovelTranslations handler: {e}")
+
 
 
 SITE_HANDLERS = {
     'novelfire': handle_novelfire,
     'wetriedtls': handle_wetriedtls,
-    'helioscans': handle_helioscans
+    'helioscans': handle_helioscans,
+    'webnoveltranslations': handle_webnoveltranslations
 }
 
 
@@ -1050,7 +1164,7 @@ $$ |  $$\ $$ |  $$ |$$ |  $$ | \$$$  /  $$   ____|$$ |       $$ |$$\
             book.set_identifier(folder_path)
             book.set_title(folder_path)
             book.set_language('en')
-            book.add_author('Novelscraper by TopStop5')
+            book.add_author(f'TopStop5\'s Novelscraper')
             book.add_metadata('DC', 'title', folder_path)
             book.add_metadata('DC', 'creator', 'Novelscraper by TopStop5', {'id': 'creator', 'opf:role': 'aut'})
 
