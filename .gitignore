@@ -1,0 +1,18 @@
+# Local config (driver path, settings)
+config.json
+
+# ChromeDriver binary
+chromedriver.exe
+
+# Downloaded novel folders
+히든 특성 들고 탑 등반/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+venv/
+.venv/
+env/

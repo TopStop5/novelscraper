@@ -1,3 +1,7 @@
-selenium==4.26.1
-fade==0.0.9
+requests
 colorama==0.4.6
+selenium==4.26.1
+webdriver-manager
+fade==0.0.9
+ebooklib
+undetected-chromedriver
